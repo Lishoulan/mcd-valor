@@ -92,6 +92,7 @@ Accept: application/json, text/event-stream
 | `query-my-account` | 无 | `## Original Response` + JSON | `account`、`expiring`、**`value`** |
 | **`mall-points-products`** | `catRuleIds`（可选） | `## Original Response` + JSON | **`value`**（核心） |
 | **`query-lottery-info`** | 无 | `## Original Response` + JSON | **`value`**（抽奖决策） |
+| **`query-my-prizes`** | `pageNum`、`pageSize` | `## Original Response` + JSON | **`prizes`**（奖品追踪） |
 | `query-my-coupons` | `page`、`pageSize`（字符串） | **纯 Markdown** | `coupons`、`expiring`、`claim`、**`redeem`** |
 | **`query-store-coupons`** | `storeCode`、`orderType`、`beType`、可选 `beCode` | `## Original Response` + JSON | **`redeem`**（核心） |
 | `auto-bind-coupons` | 无 | **纯 Markdown**（成功/失败文案） | `claim` |
@@ -101,7 +102,7 @@ Accept: application/json, text/event-stream
 | `order-list` | 无 | `## Original Response` + JSON | `spend` |
 
 服务端官方共提供 **31 个 Tool**（含下单、门店菜单、积分商城、活动派对、积分抽奖等），
-本项目使用其中 **11 个**，聚焦**积分资产运营**这一定位：10 个纯只读 + 1 个领券写操作。
+本项目使用其中 **12 个**，聚焦**积分资产生命周期管理**这一定位：11 个纯只读 + 1 个领券写操作。
 
 ---
 
@@ -185,7 +186,55 @@ query-lottery-info      →  「另一条路：24 积分抽一次，27 种奖品
 
 ---
 
-## 3.1 核心组合：`redeem` 的三Tool 交叉
+## 3.05 核心组合：`prizes` 揭示的第三类资产盲区
+
+前两个组合（`value`、`redeem`）覆盖了「积分」和「卡包里的券」。
+但实测发现麦当劳 MCP 里还有**第三类资产**，它藏在一个大多数工具都忽略的地方：
+
+```text
+query-my-prizes     →  「你抽中过 19 个奖品，其中 3 个已失效」
+                          ↓
+        「抽奖抽到的券躺在奖品列表里，不在卡包里 ——
+          连 query-my-coupons 都看不到它们。」
+```
+
+**关键发现**：`query-my-coupons`（查卡包券）和 `query-my-prizes`（查奖品）
+是**两个完全独立的数据源**。抽奖抽到的券只在后者里：
+
+```json
+{"data": {"status": {...}, "prizes": [
+  {"id": "...", "name": "麦辣三件套4折券", "prizeType": 4,
+   "prizeTypeText": "优惠券", "recordTime": "2026-03-27 11:53:23",
+   "status": 2, "statusText": "已失效",
+   "timeRemindText": "可用时间: 2026.03.27-2026.04.02"}
+]}}
+```
+
+| 字段 | 用途 |
+| --- | --- |
+| `name` / `prizeTypeText` | 奖品名与类型（实测该账户：门票 16 · 优惠券 3） |
+| `recordTime` | 抽中时间（用于排序） |
+| `status` / `statusText` | `0`=可用（实测值）；非 0 即失效 |
+| `timeRemindText` | 可用期，形如 `可用时间: 2026.03.27-2026.04.02`，**仅失效奖品有此字段** |
+
+**实测数据（2026-10-11）**：19 个奖品里 16 个可用、**3 个已失效**，
+全是抽奖抽到的优惠券，可用期只有 6 天（3.27-4.02）却没人用。
+
+**为什么这个发现重要**：任何只调用 `query-my-coupons` 的临期提醒工具
+（包括很可能存在的同类参赛作品）**结构性看不到这批券**——
+它们不在卡包里。这类资产需要主动去 `query-my-prizes` 才能发现。
+
+因此本项目的 `prizes` 命令专门负责这一段生命周期：
+**积分 → 抽奖 → 奖品 → 奖品失效**，前三环分别由 `account`/`value`/`prizes` 覆盖。
+
+> 注意 `status` 的取值分布不均匀（实测只观察到 0 和 2），
+> 所以代码用 `status == 0` 判可用、`!= 0` 判失效，而不是硬编码某个失效值。
+
+---
+
+
+
+## 3.1 核心组合：`redeem` 的三 Tool 交叉
 
 这是本项目区别于同类项目的关键设计。单看任一Tool 都只能得到半截答案：
 
@@ -484,6 +533,7 @@ Below is the response from an API call. To help you understand the data, I've pr
 
 ```bash
 python -m butler value         # ★★★ 积分该换成什么：性价比排行 + 抽奖决策（招牌）
+python -m butler prizes        # ★★ 抽奖奖品追踪：被漏掉的一整类资产
 python -m butler redeem        # ★★ 临期券 × 门店可用性交叉验证
 python -m butler account      # 积分账户，含历史过期损失
 python -m butler coupons      # 券包全景
@@ -495,7 +545,7 @@ python -m butler calendar     # 活动日历
 python -m butler claim        # 一键领券（写操作）
 ```
 
-回归测试：10 个命令（含参数变体共 14 次调用）全部通过，无异常抛出。
+回归测试：11 个命令（含参数变体共 15 次调用）全部通过，无异常抛出。
 
 验证「代码里搜不到任何真实 Token」：
 

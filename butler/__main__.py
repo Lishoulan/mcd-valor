@@ -56,6 +56,8 @@ Token 从环境变量 %s 读取，申请地址 %s
 
     sub.add_parser("value", help="★★★ 积分该换成什么：性价比排行 + 抽奖决策")
 
+    sub.add_parser("prizes", help="★★ 抽奖奖品追踪：抽到的券别让它过期")
+
     sp = sub.add_parser("nutrition", help="餐品营养/热量查询")
     sp.add_argument("keyword", nargs="?", default="", help="餐品关键词，如「鸡腿堡」「咖啡」")
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""积值Valor · 10 个子命令的实现。"""
+"""积值Valor · 11 个子命令的实现。"""
 
 from collections import Counter, defaultdict
 from datetime import date, timedelta
@@ -844,6 +844,107 @@ def cmd_value(client, args):
     return 0
 
 
+# ================================================================ 11. prizes（抽奖奖品追踪）
+
+
+def cmd_prizes(client, args):
+    """抽奖抽到的奖品追踪 —— 积分资产生命周期的最后一环。
+
+    积分链路：赚积分 → 换商品/抽奖 → 拿到奖品 → 奖品也会过期。
+    前三环分别由 account/value 覆盖，这一环管最后的「奖品没来得及用」。
+    """
+    U.out(U.title("%s 积值 Valor · 抽奖奖品追踪" % MCD))
+
+    payload = client.call_json("query-my-prizes", {"pageSize": "50"})
+    data = payload.get("data") or {}
+    prizes = data.get("prizes") or []
+
+    if not prizes:
+        U.out(U.yellow("  你还没有抽奖记录。"))
+        U.out(U.grey("  抽奖入口：麦麦积分抽奖活动，`python -m butler value` 可看当前成本与奖池。"))
+        U.out()
+        return 0
+
+    usable = [p for p in prizes if p.get("status") == 0]
+    dead = [p for p in prizes if p.get("status") != 0]
+    by_type = Counter(p.get("prizeTypeText") or "未知" for p in prizes)
+
+    U.out(U.kv("奖品总数", U.bold("%d 个" % len(prizes))))
+    U.out(U.kv("仍可用", U.green("%d 个" % len(usable))))
+    if dead:
+        U.out(U.kv("已失效", U.red("%d 个（白抽了）" % len(dead))))
+    U.out(U.kv("类型分布", " · ".join("%s %d" % (k, v) for k, v in by_type.most_common())))
+    U.out()
+
+    # 可用奖品：先按可用时间紧迫度排（timeRemindText 形如「可用时间: 2026.03.27-2026.04.02」）
+    def remind_key(p):
+        m = re.search(r"(\d{4})[.\-/](\d{2})[.\-/](\d{2})\s*-\s*(\d{4})[.\-/](\d{2})[.\-/](\d{2})",
+                      p.get("timeRemindText") or "")
+        if m:
+            try:
+                end = date(int(m.group(4)), int(m.group(5)), int(m.group(6)))
+                return (0, (end - date.today()).days)
+            except ValueError:
+                pass
+        return (1, 0)
+
+    if usable:
+        U.out(U.rule())
+        U.out(U.bold("  ✓ 还能用的奖品"))
+        U.out(U.rule())
+        rows = []
+        for p in sorted(usable, key=remind_key):
+            note = (p.get("timeRemindText") or "").replace("可用时间: ", "")
+            days = None
+            m = re.search(r"(\d{4})[.\-/](\d{2})[.\-/](\d{2})\s*-\s*(\d{4})[.\-/](\d{2})[.\-/](\d{2})",
+                          p.get("timeRemindText") or "")
+            if m:
+                try:
+                    end = date(int(m.group(4)), int(m.group(5)), int(m.group(6)))
+                    days = (end - date.today()).days
+                except ValueError:
+                    pass
+            if days is not None and days < 0:
+                badge = U.red("已过期")
+            elif days is not None and days <= 2:
+                badge = U.red("%d 天后截止" % days)
+            elif days is not None:
+                badge = U.green("至 %s" % note[-10:])
+            else:
+                badge = U.grey("无有效期信息")
+            rows.append([
+                U.truncate(p.get("name") or "-", 24),
+                p.get("prizeTypeText") or "-",
+                (p.get("recordTime") or "-")[:10],
+                badge,
+            ])
+        U.out(U.table(["奖品", "类型", "抽中日期", "状态"], rows, ["l", "l", "l", "l"]))
+        U.out()
+
+    if dead:
+        U.out(U.rule())
+        U.out(U.bold("  ✗ 已失效的奖品（这些积分白花了）"))
+        U.out(U.rule())
+        for p in sorted(dead, key=lambda x: x.get("recordTime") or ""):
+            note = (p.get("timeRemindText") or "").replace("可用时间: ", "")
+            U.out("  %s %s %s" % (U.red("✗"),
+                                  U.bold(U.truncate(p.get("name") or "-", 22)),
+                                  U.grey("%s · 可用期 %s" % (p.get("recordTime", "")[:10], note))))
+        U.out(U.rule())
+        U.out()
+        lost = len(dead)
+        U.out(U.red(U.bold("  ⚑ 抽中却没用的奖品：%d 个" % lost)))
+        if by_type.get("优惠券"):
+            U.out(U.grey("    抽奖抽到的优惠券最容易忘——它躺在奖品列表里，不在卡包里，"))
+            U.out(U.grey("    所以连 `coupons` 都看不到它们。这是被漏掉的一整类资产。"))
+        U.out()
+
+    if usable or dead:
+        U.out(U.grey("  数据来自官方 query-my-prizes，含奖品状态与可用期。"))
+        U.out()
+    return 0
+
+
 COMMANDS = {
     "account": cmd_account,
     "coupons": cmd_coupons,
@@ -855,4 +956,5 @@ COMMANDS = {
     "spend": cmd_spend,
     "redeem": cmd_redeem,
     "value": cmd_value,
+    "prizes": cmd_prizes,
 }
