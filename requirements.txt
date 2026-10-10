@@ -1,0 +1,15 @@
+# 麦门管家 · 零第三方依赖
+#
+# 本项目仅使用 Python 3.8+ 标准库：
+#   urllib（HTTP / JSON-RPC over Streamable-HTTP）
+#   json（报文与响应解析）
+#   re（Markdown / CSV 解析）
+#   datetime（到期日计算）
+#   collections（消费统计）
+#   unicodedata（中文显示宽度对齐）
+#   argparse（CLI）
+#
+# 所以这里没有任何需要安装的包。
+# 下面这行注释保留是为了让 `pip install -r requirements.txt` 也能正常成功退出。
+#
+# 安装：不需要。直接跑： python -m butler expiring
