@@ -1,17 +1,22 @@
-# 默认按文本处理，避免 CRLF 污染
+# 默认按文本处理，统一 LF 行尾
 * text=auto eol=lf
 
-# 🔴 PowerShell 脚本必须是 UTF-8 with BOM
-# Windows PowerShell 5.1 按 GBK 读无 BOM 的 UTF-8 中文脚本会解析崩溃
-# （症状：报「字符串缺少终止符」，且报错行号与真实错误位置不符）
-*.ps1 working-tree-encoding=UTF-8-BOM
+# PowerShell 脚本保持二进制状态，不做任何转换。
+# 原因：
+#   1. install.ps1 本身已存为 UTF-8 with BOM（Windows PowerShell 5.1 需要，
+#      按 GBK 读无 BOM 的 UTF-8 中文脚本会解析崩溃）
+#   2. 若用 *.ps1 working-tree-encoding=UTF-8-BOM，clone 时会重复转换并报错：
+#      "failed to encode 'install.ps1' from UTF-8 to UTF-8-BOM"
+#   3. .ps1 用 CRLF 也能正常执行，所以不需要行尾转换
+*.ps1 -text
 
-# 明确指定其他文件的编码
+# 明确指定
 *.sh text eol=lf
 *.py text eol=lf
 *.md text eol=lf
 *.json text eol=lf
 *.txt text eol=lf
+*.jsonl text eol=lf
 
 # 二进制文件不做任何转换
 *.png binary
