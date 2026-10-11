@@ -110,5 +110,5 @@ agent_created: true
 
 ## 参考
 
-- `MCP_INTEGRATION.md` —— 12 个 MCP Tool 的完整字段映射、5 种返回格式的解析方法、5 个实测坑
+- `MCP_INTEGRATION.md` —— 11 个 MCP Tool 的完整字段映射、5 种返回格式的解析方法、5 个实测坑
 - 若需要精确的面值/效率数字，可改用命令行版本：`python -m butler value` / `redeem` / `prizes`

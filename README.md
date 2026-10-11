@@ -4,29 +4,43 @@
 
 **市面上的工具都在帮你「攒」。积值只关心一件事：你手里这些会过期的东西，到底该怎么用掉、用在哪、还能不能救回来。**
 
-三个实测发现，多数人不知道：
+三个实测发现，多数人不知道（**2026-10-11 实测**）：
 
 | 发现 | 数据 |
 | --- | --- |
 | 你的积分已经在悄悄蒸发 | 累计 6345.4 分里**2902.9 分已过期（46%）**，而 App 显示「本月过期 0 分」 |
-| 大部分临期券其实用不了 | 同一天 7 张券到期，**只有 2 张**在你常去的门店能用 |
+| 大部分临期券其实用不了 | 3 天内到期的券里，**能用的不到一半** |
 | 抽奖抽的券根本看不见 | 它们躺在**奖品列表**里不在卡包里——**19 个奖品中 3 个已失效**，只查卡包的工具结构上发现不了 |
+
+> 券数每天在变（券会过期、也会新进账），所以这里写比例而非具体张数。
+> 想看你自己那一刻的数字，跑一下 `python -m butler redeem` 就行。
 
 <br>
 
 ![积值 valor 真实运行录屏：逐个核验下架商品后给出真实最划算兑换](docs/images/valor-demo.gif)
 
-[![MCP](https://img.shields.io/badge/MCP-12%20tools-DA291C.svg)](MCP_INTEGRATION.md)
+[![MCP](https://img.shields.io/badge/MCP-11%20tools-DA291C.svg)](MCP_INTEGRATION.md)
 [![Skill](https://img.shields.io/badge/WorkBuddy-Skill-FFC72C.svg)](SKILL.md)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB.svg)](requirements.txt)
 [![Deps](https://img.shields.io/badge/dependencies-zero-brightgreen.svg)](requirements.txt)
 
-**纯 Python 3.8+ 标准库 · 零第三方依赖 · 12 个 MCP Tool 全部真实调用 · 11 个命令 · 可作为 WorkBuddy Skill 安装**
+**纯 Python 3.8+ 标准库 · 零第三方依赖 · 11 个 MCP Tool 全部真实调用 · 11 个命令 · 可作为 WorkBuddy Skill 安装**
 
 *麦当劳程序员创意开发大赛参赛作品 · 非麦当劳官方产品*
 
 > 💛 如果「过期资产该被抢救而不是被提醒」这个思路对你有用，点个 **⭐ Star** 支持一下。
 > 本作品正在参加麦当劳程序员节创意开发大赛，**Star 数决定排名** 🙏
+
+**👇 三分钟版**
+
+| 你想 | 直接看 |
+| --- | --- |
+| 先装起来试试 | [🚀 安装](#-安装两种方式任选其一)（2 分钟，只需一个免费 Token） |
+| 只看核心结论 | [🎯 三个盲区](#-三个盲区我们和只做提醒的工具差在哪) |
+| 看我们踩过的坑 | [🔬 我们怎么保证自己不说错](#-我们怎么保证自己不说错) |
+| 全部命令 | [📋 全部命令](#-全部命令) |
+| 挑细节 | [🔬 给爱看细节的同学](#-给爱看细节的同学) |
+| 报 bug / 想知道怎么做的 | [❓ 小白常见问题](#-小白常见问题) |
 
 </div>
 
@@ -144,7 +158,7 @@ $ python -m butler redeem
   ✗ 4 张券确认救不回
 ```
 
-**「有 6 张券要过期」是噪音；「这 4 张真的用不了了，别白跑」才是价值。**
+**「有 6 张券要过期」是噪音；「其中 4 张真的用不了了，别白跑」才是价值。**
 
 ### 它不只说「不可用」，还会追问一句然后再回答
 
@@ -213,7 +227,7 @@ git commit -m "chore: 跨天记录 $(date +%F)" && git push
 麦当劳 MCP 有 `query-store-coupons` 能查「你在某门店实际能用哪些券」，
 但 103 个参赛项目里**几乎没有把它和卡包券交叉起来用的**。
 
-结果是：所有人都能告诉你「有 7 张券要过期」，但没人告诉你**「所以今天该去哪家店」**。
+结果是：所有人都能告诉你「你有几张券要过期」，但没人告诉你**「所以今天该去哪家店」**。
 
 `redeem` 把 `query-my-coupons` × `query-nearby-stores` × `query-store-coupons`
 三个 Tool 交叉，回答的正是最后那一问。而且它严格区分三态：
@@ -355,37 +369,64 @@ account 输出里：「本月将过期 0 分」 + 「已过期 2902.9 分」
 
 ---
 
-## 🚀 三步开吃
+## 🚀 安装（两种方式，任选其一）
 
-> **两种用法**：装成 WorkBuddy Skill（见上方「30 秒看懂」），或直接用命令行。
+> 两条路都只需要一个东西：**MCP Token**（免费，1 分钟申请）。
+> 不需要 build、不需要装任何第三方包、不需要配置文件。
 
-### 第 0 步 · 确认你有 Python 3.8+
+### 🥇 方式一：装成 WorkBuddy Skill（推荐，最省事）
 
-不需要 pip install 任何东西 —— 本项目**零第三方依赖**。
-
-### 第 1 步 · 申请 MCP Token
-
-前往 <https://open.mcd.cn/mcp>：登录 → 控制台 → 激活 → 一键复制。
-
-### 第 2 步 · 设置环境变量
+**Linux / macOS / Git Bash**
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/Lishoulan/mcd-valor/main/install.sh | bash
+```
+
+**Windows PowerShell**
+
+```powershell
+irm https://raw.githubusercontent.com/Lishoulan/mcd-valor/main/install.ps1 | iex
+```
+
+装完**重开一轮 WorkBuddy 会话**，然后直接说人话就行：
+
+- 「我的积分该换成什么」
+- 「我这几张券今天该去哪家店用」
+- 「抽奖抽的券还有哪些能用」
+- 「帮我做个账户过期资产体检」
+
+<details>
+<summary>不想用一键脚本？</summary>
+
+手动把 [`SKILL.md`](SKILL.md) 复制到 `~/.workbuddy/skills/mcd-valor/` 即可。
+首次使用仍需在 WorkBuddy 里启用麦当劳 MCP 连接器 `mcd-mcp` 并填入 Token。
+</details>
+
+### 🥈 方式二：命令行
+
+```bash
+# 1. 拿代码（零依赖，不用 pip install 任何东西）
+git clone https://github.com/Lishoulan/mcd-valor.git && cd mcd-valor
+
+# 2. 申请 Token：https://open.mcd.cn/mcp → 登录 → 控制台 → 激活 → 一键复制
+
+# 3. 配好 Token
 export MCD_MCP_TOKEN=你的Token        # Linux / macOS / Git Bash
 # set MCD_MCP_TOKEN=你的Token         # Windows CMD
 # $env:MCD_MCP_TOKEN='你的Token'      # PowerShell
+
+# 4. 跑起来
+python -m butler redeem
 ```
 
-### 第 3 步 · 跑起来
+Windows 嫌配环境变量麻烦，可以直接用 PowerShell：
 
-```bash
-git clone https://github.com/Lishoulan/mcd-valor.git
-cd mcd-valor
-python -m butler value
+```powershell
+$env:MCD_MCP_TOKEN = "你的Token"
+python -m butler redeem
 ```
 
-就这一条。**没有配置文件，不需要 build，不用装包。**
-
-> 没设 Token 时它会自己告诉你怎么办：
+> 没配 Token 时它会自己告诉你怎么办：
 > ```text
 > ✗ 鉴权问题
 >   没有检测到环境变量 MCD_MCP_TOKEN。
@@ -459,8 +500,8 @@ python -m butler value
       到店 3 家门店不支持，外送也不在券池——这张券这次用不了了。
 ```
 
-> **3 张券今天就到期，但它们连外卖都救不回来——别白跑一趟。**
-> 一个只做提醒的工具，会让你为这5 张白跑一趟店。
+> **今天到期的券里，大部分连外卖都救不回来——别白跑一趟。**
+> 一个只做提醒的工具，会让你为这些券挨个跑店，最后发现一张都用不上。
 >
 > 注意这个比例**每天都不同** —— 券在过期、门店的券池在变。
 > 所以本工具不承诺「提醒」，只如实回答**此刻**哪张券能用。
