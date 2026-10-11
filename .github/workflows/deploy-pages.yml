@@ -1,0 +1,39 @@
+name: 部署演示页
+
+# 把 docs/index.html 发布到 GitHub Pages。
+# 纯静态部署，不涉及任何 Token 或 MCP 调用。
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 配置 Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: 部署 docs/ 目录
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
