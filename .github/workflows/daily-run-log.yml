@@ -43,6 +43,8 @@ jobs:
           python-version: '3.11'
 
       - name: 校验环境
+        env:
+          MCD_MCP_TOKEN: ${{ secrets.MCD_MCP_TOKEN }}
         run: |
           set -euo pipefail
           python -c "import sys; assert sys.version_info >= (3,8), sys.version"
