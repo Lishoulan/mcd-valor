@@ -37,39 +37,54 @@ def build_parser():
 Token 从环境变量 %s 读取，申请地址 %s
 """ % (TOKEN_ENV, TOKEN_URL),
     )
-    p.add_argument("--endpoint", default=DEFAULT_ENDPOINT, help="MCP 接入地址（默认 %s）" % DEFAULT_ENDPOINT)
+    p.add_argument("--endpoint", default=None, help="MCP 接入地址（默认 %s）" % DEFAULT_ENDPOINT)
     sub = p.add_subparsers(dest="command", metavar="<命令>")
 
-    sub.add_parser("account", help="积分账户总览（含历史过期损失提醒）")
+    # 全局参数也挂到每个子命令上，这样
+    #   python -m butler account --endpoint X
+    # 和
+    #   python -m butler --endpoint X account
+    # 都能用 —— argparse 默认只认后者，但前者才是多数人的直觉写法。
+    def _add_global(sp):
+        # SUPPRESS：子命令没写 --endpoint 时该属性压根不存在，
+        # 不会用 None 覆盖掉全局设置的值。
+        sp.add_argument("--endpoint", default=argparse.SUPPRESS,
+                        help="MCP 接入地址（覆盖全局设置）")
+        return sp
 
-    sub.add_parser("coupons", help="我的全部券，按临期程度上色")
+    def _new(name, **kw):
+        return _add_global(sub.add_parser(name, **kw))
 
-    sub.add_parser("claim", help="一键领取所有当前可领的券")
+    _new("account", help="积分账户总览（含历史过期损失提醒）")
 
-    sp = sub.add_parser("expiring", help="★ 积分 + 券包合并的过期倒计时清单")
+    _new("coupons", help="我的全部券，按临期程度上色")
+
+    _new("claim", help="一键领取所有当前可领的券")
+
+    sp = _new("expiring", help="★ 积分 + 券包合并的过期倒计时清单")
     sp.add_argument("--window", type=int, default=3, metavar="N", help="提前几天提醒（默认 3）")
 
-    sp = sub.add_parser("redeem", help="★★ 临期券去哪张店能用：券 × 门店可用性交叉验证")
+    sp = _new("redeem", help="★★ 临期券去哪张店能用：券 × 门店可用性交叉验证")
     sp.add_argument("keyword", nargs="?", default="", help="门店名/地标关键词，用于缩小验证范围")
     sp.add_argument("--window", type=int, default=3, metavar="N", help="提前几天（默认 3）")
     sp.add_argument("--limit", type=int, default=0, metavar="N", help="最多验证几家门店（默认全部）")
 
-    sub.add_parser("value", help="★★★ 积分该换成什么：性价比排行 + 抽奖决策")
+    _new("value", help="★★★ 积分该换成什么：性价比排行 + 抽奖决策")
 
-    sub.add_parser("prizes", help="★★ 抽奖奖品追踪：抽到的券别让它过期")
+    _new("prizes", help="★★ 抽奖奖品追踪：抽到的券别让它过期")
 
-    sp = sub.add_parser("nutrition", help="餐品营养/热量查询")
+    sp = _new("nutrition", help="餐品营养/热量查询")
     sp.add_argument("keyword", nargs="?", default="", help="餐品关键词，如「鸡腿堡」「咖啡」")
 
-    sp = sub.add_parser("stores", help="附近门店搜索")
+    sp = _new("stores", help="附近门店搜索")
     sp.add_argument("keyword", nargs="?", default="", help="门店名/地标关键词")
     sp.add_argument("--city", help="城市名；给了就按地理位置搜（searchType=2）")
     sp.add_argument("--dt", dest="drive_through", action="store_true", help="搜得来速车道取餐门店（beType=5）")
 
-    sp = sub.add_parser("calendar", help="本月营销活动日历")
+    sp = _new("calendar", help="本月营销活动日历")
     sp.add_argument("--date", help="指定基准日期 yyyy-MM-dd，返回前后各一天")
 
-    sub.add_parser("spend", help="历史订单消费报告")
+    _new("spend", help="历史订单消费报告")
 
     return p
 
@@ -83,7 +98,9 @@ def main(argv=None):
         return 1
 
     try:
-        with McdClient(endpoint=args.endpoint) as client:
+        #--endpoint 在全局和子命令下都能写，子命令的优先
+        endpoint = getattr(args, "endpoint", None) or DEFAULT_ENDPOINT
+        with McdClient(endpoint=endpoint) as client:
             return C.COMMANDS[args.command](client, args) or 0
     except AuthError as exc:
         U.out("")
