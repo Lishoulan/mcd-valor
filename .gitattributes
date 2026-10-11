@@ -1,0 +1,20 @@
+# 默认按文本处理，避免 CRLF 污染
+* text=auto eol=lf
+
+# 🔴 PowerShell 脚本必须是 UTF-8 with BOM
+# Windows PowerShell 5.1 按 GBK 读无 BOM 的 UTF-8 中文脚本会解析崩溃
+# （症状：报「字符串缺少终止符」，且报错行号与真实错误位置不符）
+*.ps1 working-tree-encoding=UTF-8-BOM
+
+# 明确指定其他文件的编码
+*.sh text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.txt text eol=lf
+
+# 二进制文件不做任何转换
+*.png binary
+*.gif binary
+*.jpg binary
+*.ico binary
