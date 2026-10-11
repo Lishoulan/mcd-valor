@@ -43,7 +43,7 @@ gifsicle -O3 --lossy=80 valor-demo.gif -o valor-demo-optimized.gif
 放进 `docs/images/` 后，在 README 首屏替换：
 
 ```markdown
-![积值 valor 真实运行录屏](docs/images/valor-demo.gif)
+![积值 valor 真实运行录屏](images/valor-demo.gif)
 ```
 
 **建议尺寸**：宽度 ≤ 720px、体积 ≤ 5 MB。GitHub 会压缩过大的 GIF，
