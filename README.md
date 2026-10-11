@@ -19,6 +19,8 @@
 
 ![积值 valor 真实运行录屏：逐个核验下架商品后给出真实最划算兑换](docs/images/valor-demo.gif)
 
+**▶️ [在线演示页](https://lishoulan.github.io/mcd-valor/)** — 不想装也能先看效果
+
 [![MCP](https://img.shields.io/badge/MCP-11%20tools-DA291C.svg)](MCP_INTEGRATION.md)
 [![Skill](https://img.shields.io/badge/WorkBuddy-Skill-FFC72C.svg)](SKILL.md)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB.svg)](requirements.txt)
@@ -35,6 +37,7 @@
 
 | 你想 | 直接看 |
 | --- | --- |
+| **先看看效果** | **[▶️ 在线演示页](https://lishoulan.github.io/mcd-valor/)**（不用装，30 秒看完） |
 | 先装起来试试 | [🚀 安装](#-安装两种方式任选其一)（2 分钟，只需一个免费 Token） |
 | 只看核心结论 | [🎯 三个盲区](#-三个盲区我们和只做提醒的工具差在哪) |
 | 看我们踩过的坑 | [🔬 我们怎么保证自己不说错](#-我们怎么保证自己不说错) |
