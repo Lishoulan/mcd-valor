@@ -1,0 +1,78 @@
+name: 每日跨天记录
+
+# 每天自动跑一次 tools/record_run.py，把真实结果追加成时间序列。
+#
+# 为什么需要：券每天在过期、每天有新的进账。所有参赛项目的 README
+# 都只贴某一刻的截图 —— 而这条记录会自己长长，
+# 证明项目真的在持续运行，而不是P 了一张好看的图。
+#
+# Token 从仓库 secrets 读取（MCD_MCP_TOKEN），绝不写进代码或日志。
+
+on:
+  schedule:
+    # 每天 01:17 UTC = 09:17 北京时间（避开整点，减少 GitHub 调度拥堵）
+    - cron: '17 1 * * *'
+  workflow_dispatch: # 允许手动触发
+  push:
+    # 只有改了记录器本身才触发，避免每次提交都重复跑
+    paths:
+      - 'tools/record_run.py'
+      - 'butler/**'
+      - '.github/workflows/daily-run-log.yml'
+
+# 同一时间只跑一个，防止并发写坏 jsonl
+concurrency:
+  group: daily-run-log
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 校验环境
+        run: |
+          set -euo pipefail
+          python -c "import sys; assert sys.version_info >= (3,8), sys.version"
+          if [ -z "${MCD_MCP_TOKEN:-}" ]; then
+            echo "::error::未配置 secrets.MCD_MCP_TOKEN"
+            echo "请在 Settings → Secrets and variables → Actions 新增 MCD_MCP_TOKEN"
+            exit 1
+          fi
+          # 只打印长度，绝不打印内容
+          echo "Token 已配置，长度 ${#MCD_MCP_TOKEN}"
+
+      - name: 抓取今天的真实数据
+        env:
+          MCD_MCP_TOKEN: ${{ secrets.MCD_MCP_TOKEN }}
+        run: |
+          set -euo pipefail
+          # 注意：不要加 MCD_BUTLER_COLOR，CI 里也不需要 ANSI
+          python tools/record_run.py
+
+      - name: 提交记录
+        run: |
+          set -euo pipefail
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add examples/run-log.jsonl docs/RUN_LOG.md
+          if git diff --staged --quiet; then
+            echo "今天的数据与上次完全一致，跳过提交"
+            exit 0
+          fi
+          git commit -m "chore: 跨天记录 $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -183,12 +183,39 @@ def main():
     rows = [r for r in rows if r["date"] != today] + [snap_row]
     rows.sort(key=lambda r: r["date"])
 
+    # 若当天已有记录且指标完全相同，保留原记录（含原 at 时间戳），
+    # 避免 CI 每天数据没变也产生一次提交，污染提交历史。
+    previous = next((r for r in load_all() if r["date"] == today), None)
+    if previous and _same_metrics(previous, snap_row):
+        print("今天的数据与已有记录完全一致，保留原时间戳。")
+        snap_row = previous
+        rows = [r for r in rows if r["date"] != today] + [snap_row]
+        rows.sort(key=lambda r: r["date"])
+
     os.makedirs(os.path.dirname(JSONL), exist_ok=True)
     with open(JSONL, "w", encoding="utf-8") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
 
     os.makedirs(os.path.dirname(MARKDOWN), exist_ok=True)
+    with open(MARKDOWN, "w", encoding="utf-8") as f:
+        f.write(render_md(rows))
+
+    print("已记录 %s：" % today)
+    for k in ("available_point", "expired_point", "coupons_total",
+              "coupons_due", "rescuable", "prizes_total", "prizes_dead"):
+        print("  %-18s %s" % (k, snap_row.get(k, "—")))
+    print("\n累计 %d 天记录 -> docs/RUN_LOG.md" % len(rows))
+    return 0
+
+
+def _same_metrics(a, b):
+    """忽略 at字段，比较实际指标。"""
+    ignore = {"at"}
+    ka = {k: v for k, v in a.items() if k not in ignore}
+    kb = {k: v for k, v in b.items() if k not in ignore}
+    return ka == kb
+
     with open(MARKDOWN, "w", encoding="utf-8") as f:
         f.write(render_md(rows))
 
