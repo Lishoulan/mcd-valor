@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>积值 Valor · 过期资产抢救队</title>
+<meta name="description" content="麦当劳账户里会过期的东西，到底该怎么用掉、用在哪、还能不能救回来。真实调用麦当劳 MCP，零Mock 数据。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:"Segoe UI","Microsoft YaHei UI",-apple-system,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px}
+.hero{padding:56px 0 36px;border-bottom:1px solid #21262d}
+h1{font-size:32px;font-weight:600;color:#e6edf3;letter-spacing:.5px}
+.tag{display:inline-block;font-size:12px;color:#ffc680;background:#2d1a0e;border:1px solid #7d4a1f;padding:3px 10px;border-radius:20px;margin-bottom:14px}
+.lead{font-size:17px;color:#c9d1d9;margin-top:14px}
+.findings{margin:28px 0}
+.f{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:16px 18px;margin-bottom:12px}
+.f h3{font-size:15px;font-weight:600;color:#e6edf3;margin-bottom:6px}
+.f p{font-size:14px;color:#8b949e}
+.f b{color:#ffc680}
+h2{font-size:21px;font-weight:600;color:#e6edf3;margin:44px 0 6px;padding-top:26px;border-top:1px solid #21262d}
+.sub{font-size:14px;color:#8b949e;margin-bottom:18px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 14px}
+.tab{background:#161b22;border:1px solid #30363d;color:#8b949e;font-size:13px;
+padding:8px 15px;border-radius:8px;cursor:pointer;transition:.15s;font-family:inherit}
+.tab:hover{border-color:#58a6ff;color:#c9d1d9}
+.tab.on{background:#1f6feb;border-color:#1f6feb;color:#fff}
+pre{background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:18px;
+overflow-x:auto;font-size:12.5px;line-height:1.5;
+font-family:"Cascadia Mono",Consolas,"DejaVu Sans Mono",monospace;color:#c9d1d9;white-space:pre}
+.shot{width:100%;border-radius:10px;border:1px solid #30363d;margin:14px 0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin:20px 0}
+.card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px}
+.card h4{font-size:14.5px;font-weight:600;color:#e6edf3;margin-bottom:8px}
+.card p{font-size:13.5px;color:#8b949e}
+.card .old{color:#f09595;text-decoration:line-through}
+.card .new{color:#7ee787;font-weight:600}
+code{background:#161b22;border:1px solid #30363d;padding:1.5px 6px;border-radius:4px;
+font-family:"Cascadia Mono",Consolas,monospace;font-size:12.5px;color:#79c0ff}
+pre code{background:none;border:none;padding:0;color:inherit;font-size:inherit}
+.note{background:#1c1410;border:1px solid #7d4a1f;border-radius:10px;
+padding:14px 16px;font-size:13.5px;color:#d9b382;margin:16px 0}
+.stars{display:flex;gap:10px;margin:26px 0;flex-wrap:wrap}
+.stars a{background:#161b22;border:1px solid #30363d;border-radius:10px;
+padding:12px 18px;font-size:14px;display:inline-block}
+.stars a:hover{border-color:#1f6feb;text-decoration:none}
+footer{margin:50px 0 40px;padding-top:24px;border-top:1px solid #21262d;
+font-size:12.5px;color:#6e7681}
+@media(max-width:600px){h1{font-size:24px}.wrap{padding:0 14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hero">
+  <span class="tag">💎 过期资产抢救队</span>
+  <h1>你手里这些会过期的东西<br>到底该怎么用掉、用在哪、还能不能救回来</h1>
+  <p class="lead">
+    市面上的工具都在帮你「攒」。积值只关心一件事：
+    <b style="color:#ffc680">过期的资产该被抢救，而不是只被提醒。</b>
+  </p>
+  <p style="margin-top:22px">
+    <a href="https://github.com/Lishoulan/mcd-valor" style="background:#1f6feb;color:#fff;
+       padding:11px 22px;border-radius:8px;font-size:14.5px;font-weight:600;display:inline-block">
+       ⭐ 在 GitHub 上点个 Star</a>
+    <a href="#自己试" style="margin-left:10px">先看看怎么跑 ↓</a>
+  </p>
+</div>
+
+<div class="findings">
+  <div class="f">
+    <h3>① 你的积分在悄悄蒸发</h3>
+    <p>累计 6345.4 分里 <b>2902.9 分已过期（46%）</b>，而 App 显示「本月过期 0 分」——
+       因为官方返回的是<b>累计口径</b>，不是本月。</p>
+  </div>
+  <div class="f">
+    <h3>② 大部分临期券其实用不了</h3>
+    <p>3 天内到期的券里，<b>能用的不到一半</b>。
+       而大多数工具只会告诉你「有几张券要过期」，不告诉你<b>今天该去哪张店</b>。</p>
+  </div>
+  <div class="f">
+    <h3>③ 抽奖抽的券根本看不见</h3>
+    <p>它们躺在<b>奖品列表</b>里，不在<b>卡包</b>里——这是两个完全独立的数据源。
+       实测 19 个奖品中 3 个已失效，<b>只查卡包的工具结构上发现不了</b>。</p>
+  </div>
+</div>
+
+<h2>真实运行录屏</h2>
+<p class="sub">下面每一个数字都是真实调用麦当劳 MCP 的返回结果，没有 Mock、没有手写美化。</p>
+<img class="shot" src="images/valor-demo.gif" alt="积值 valor 真实运行录屏">
+
+<h2>券 × 门店交叉验证</h2>
+<p class="sub">
+  <code>query-my-coupons</code> × <code>query-nearby-stores</code> × <code>query-store-coupons</code>
+  三个工具交叉，回答的正是最后一问：<b>所以今天该去哪家店？</b>
+</p>
+<img class="shot" src="images/redeem-demo.png" alt="redeem 命令真实运行结果">
+
+<h2>它不只说「不可用」，还会追问一句再回答</h2>
+<p class="sub">
+  旧版对不可用的券建议「试试外送场景或换一家门店」——<b>但它从来没查过外送</b>。
+  这是建议一个未验证的出路，比不给建议更糟。
+</p>
+<div class="note">
+  实测查了 6 家门店（收藏店 3 家 + 按位置搜 3 家），那些券在任何一家的券池里都不存在。
+  <b>「换一家门店」本身就是误导</b>——用户到了门口才发现用不了。<br><br>
+  现在它会真的去查外送券池，拿不到 <code>beCode</code> 时会老实标「未核验」，不假装查过。
+</div>
+
+<h2>推荐之前，先核验商品还在不在架</h2>
+<p class="sub">这是我们实测发现的最严重的一个问题。</p>
+<div class="cards">
+  <div class="card">
+    <h4>✗ 修复前</h4>
+    <p>榜首「50 积分换 ¥18.8」调接口返回
+      <code>610403 商品已下架</code>——<span class="old">它在推荐换不了的东西</span></p>
+    <p style="margin-top:10px">三个字段全都不可靠：<br>
+      · <code>status</code> 恒为 2<br>
+      · <code>downTime</code> 派对类是未来日期<br>
+      · 过滤 <code>spuId</code> 后 50 件里 <b>19 件已下架</b></p>
+  </div>
+  <div class="card">
+    <h4>✓ 修复后</h4>
+    <p>逐个调 <code>mall-product-detail</code> 核验，剔除后如实告知剔了几件。</p>
+    <p style="margin-top:10px">最优汇率
+      <span class="old">¥37.6</span> → <span class="new">¥13.8</span> /100 积分<br>
+      <b>降了 63%</b>——之前的漂亮数字是被下架商品粉饰的。</p>
+  </div>
+</div>
+<img class="shot" src="images/value-demo.png" alt="value 命令真实运行结果">
+
+<h2>我们怎么保证自己不说错</h2>
+<p class="sub">我们用一个问题逐条审视 11 个命令：<b>「如果没人投票、没人评分，你还会用它吗？」</b></p>
+<div class="findings">
+  <div class="f">
+    <h3>官方字段自己就不自洽，我们如实披露</h3>
+    <p>累计 6345.4 − 可用 1583.5 − 已用 1595.0 = 3166.9，
+       但 <code>expiredPoint</code> = 2902.9，<b>差 264 分，官方没解释</b>。
+       我们把这个差额摆出来，<b>不替官方猜它是什么</b>。</p>
+  </div>
+  <div class="f">
+    <h3>不计算抽奖期望值</h3>
+    <p><code>query-lottery-info</code> 的奖品列表里<b>没有任何中奖概率字段</b>。
+       概率未知时算期望值就是编造——所以只给成本与奖池，换不换由你决定。</p>
+  </div>
+  <div class="f">
+    <h3>这类 bug 单元测试测不出来</h3>
+    <p>上面两个问题<b>函数返回值完全正常、14 项回归全绿</b>。
+       它们需要真实接口 + 「这个结论对不对」的判断力。</p>
+  </div>
+  <div class="f">
+    <h3>我们测了大部分人不测的：空账户</h3>
+    <p>我的账户什么都有，所以「什么都没有」这条路一开始也没走过 ——
+       而<b>新用户第一天就是空账户</b>。<br>
+       <code>tools/test_empty_account.py</code> 把所有接口换成空返回，
+       黑盒验证 8 个命令：<b>全部优雅降级，零未捕获异常</b>。<br>
+       输出还都带出路，不是干巴巴一句「无数据」：
+       「卡包是空的 → 去 <code>claim</code> 领券」。</p>
+  </div>
+</div>
+
+<h2>自己试</h2>
+<p class="sub">两条路都只需要一个东西：<b>免费 MCP Token</b>（1 分钟申请）。不需要 build、不需要装包。</p>
+<pre><code># 装成 WorkBuddy Skill（推荐）
+curl -fsSL https://raw.githubusercontent.com/Lishoulan/mcd-valor/HEAD/install.sh | bash
+
+# Windows PowerShell
+irm https://raw.githubusercontent.com/Lishoulan/mcd-valor/HEAD/install.ps1 | iex
+
+# 或者命令行（零第三方依赖，clone 即跑）
+git clone https://github.com/Lishoulan/mcd-valor.git &amp;&amp; cd mcd-valor
+export MCD_MCP_TOKEN=你的Token      # https://open.mcd.cn/mcp 申请
+python -m butler redeem</code></pre>
+
+<div class="stars">
+  <a href="https://github.com/Lishoulan/mcd-valor">⭐ 完整代码与文档</a>
+  <a href="https://github.com/Lishoulan/mcd-valor/blob/main/MCP_INTEGRATION.md">🔧 MCP 字段与踩坑记录</a>
+  <a href="https://github.com/M-China/mcd-developer-innovation-challenge/issues/411">📋 参赛申请</a>
+</div>
+
+<footer>
+  本页所有数字均来自真实 MCP 调用（2026-10-11 快照），券数会随日期变化。<br>
+  麦当劳程序员创意开发大赛参赛作品 · 非麦当劳官方产品
+</footer>
+
+</div>
+
+<script>
+var tabs = document.querySelectorAll('.tab');
+</script>
+</body>
+</html>
