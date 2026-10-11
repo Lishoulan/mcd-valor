@@ -22,8 +22,8 @@ DOCS = ['README.md', 'SKILL.md', 'MCP_INTEGRATION.md', 'CONTEST_DECLARATION.md',
 # 命令后面跟的可能是注释、重定向、管道、引号或行尾标点，一律截断
 TAIL = re.compile(r'[#>|`\'"<].*$')
 pat = re.compile(r'python -m butler\b([^>|\n]*)')
-# 占位符不是真命令：`butler <命令>`、但ler `value` 等
-PLACEHOLDER = re.compile(r'^[<`\'"]|[\u4e00-\u9fff]{2,}')
+# 占位符不是真命令：`butler <命令>`、`butler ...` 等
+PLACEHOLDER = re.compile(r'^[<`\'".]|^-\w+$|^$')
 
 seen = {}
 for d in DOCS:
