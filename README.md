@@ -391,6 +391,29 @@ python tools/test_empty_account.py
 | Token 写错 | 「该Token 不存在或已失效」 |
 | 网络不通 / 502 | 「请检查网络或代理设置」+ 三条排查建议 |
 
+### 文档里的命令，逐条实跑过
+
+文档写的命令如果跑不通，那文档就是 bug。所以直接把它变成测试：
+
+```bash
+export MCD_MCP_TOKEN=你的Token
+python tools/test_doc_commands.py
+```
+
+它会从 9 个文档里抽出所有 `python -m butler ...` 示例并**逐条真的执行**：
+
+```text
+文档里出现的命令共 18 条
+✓ butler account  ✓ butler redeem  ✓ butler value
+✓ butler stores 地铁站 --dt --city 深圳   ...
+通过 18 条，失败 0 条
+```
+
+**这个测试当场抓出过一个真 bug**：README 里写的
+`python -m butler stores 地铁站 --dt` **少了 `--city`**，
+照着抄会直接报 `600050 收藏餐厅列表为空`。
+已修正文档。
+
 ### 其他工具通常不会告诉你的事
 
 | 现象 | 真相 |
@@ -650,7 +673,7 @@ python -m butler redeem 爱联 --limit 2      # 只验证 2 家门店（省请�
 python -m butler expiring --window 14        # 两周内的临期全景
 python -m butler nutrition 鸡腿堡            # 关键词过滤营养表
 python -m butler stores 北大 --city 北京      # 按地理位置搜（searchType=2）
-python -m butler stores 地铁站 --dt          # 只搜得来速车道取餐
+python -m butler stores 地铁站 --dt --city 深圳 # 只搜得来速车道取餐（--dt 必须配 --city）
 python -m butler calendar --date 2026-10-15  # 指定日期前后三天的活动
 ```
 

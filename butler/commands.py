@@ -448,10 +448,16 @@ def cmd_stores(client, args):
     rows = []
     for s in stores:
         dist = s.get("distance")
+        # 🔴 不确定就不写单位。
+        # 实测 `distance` 无单位信息：搜深圳门店时返回 4611 / 12067，
+        # 若当公里显示会写出「离你5327 公里」这种荒谬结论。
+        # 官方文档没说明它到底是米还是公里，所以这里只给原始值。
         try:
-            dist_txt = "%.1fkm" % float(dist) if float(dist) > 0 else "-"
+            v = float(dist)
+            dist_txt = "%.0f" % v if v > 0 else "-"
         except (TypeError, ValueError):
             dist_txt = "-"
+        resv = "可预约" if s.get("reservation") else U.grey("不可预约")
         resv = "可预约" if s.get("reservation") else U.grey("不可预约")
         rows.append([
             s.get("storeName") or "-",
@@ -460,10 +466,12 @@ def cmd_stores(client, args):
             resv,
             U.grey(U.truncate(s.get("address") or "-", 40)),
         ])
-    U.out(U.table(["门店", "门店编号", "距离", "预约", "地址"], rows,
+    U.out(U.table(["门店", "门店编号", "距离*", "预约", "地址"], rows,
                   ["l", "l", "r", "l", "l"]))
     U.out()
     U.out(U.grey("  共 %d 家。门店编号可用于下单/查券类工具。" % len(stores)))
+    U.out(U.grey("  * 官方接口未说明 distance 的单位（实测搜深圳门店返回 4611、12067），"
+                  "所以这里只给原始值，不标 km。"))
     U.out()
     return 0
 
