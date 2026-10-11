@@ -32,6 +32,9 @@ jobs:
       - name: 配置 Pages
         id: pages
         uses: actions/configure-pages@v5
+        with:
+          # 首次运行时Pages 尚未启用，这里自动开启
+          enablement: true
 
       - name: 部署 docs/ 目录
         uses: actions/upload-pages-artifact@v3
