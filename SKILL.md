@@ -111,4 +111,9 @@ agent_created: true
 ## 参考
 
 - `MCP_INTEGRATION.md` —— 11 个 MCP Tool 的完整字段映射、5 种返回格式的解析方法、5 个实测坑
-- 若需要精确的面值/效率数字，可改用命令行版本：`python -m butler value` / `redeem` / `prizes`
+  （一键安装会一并放到本技能目录；若此处找不到，说明安装不完整）
+- `examples/README.md` —— 各命令的真实输出样例
+- 想要更快的精确数字（面值密度、逐店可用性明细），可以用命令行版本
+  `python -m butler value` / `redeem` / `prizes`。
+  ⚠️ 但它**不包含在一键安装里** —— 需要另外clone：
+  `git clone https://github.com/Lishoulan/mcd-valor.git`

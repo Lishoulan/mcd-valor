@@ -54,13 +54,13 @@
 **方式一 · 装成 WorkBuddy Skill**（推荐）
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Lishoulan/mcd-valor/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Lishoulan/mcd-valor/HEAD/install.sh | bash
 ```
 
 Windows PowerShell：
 
 ```powershell
-irm https://raw.githubusercontent.com/Lishoulan/mcd-valor/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/Lishoulan/mcd-valor/HEAD/install.ps1 | iex
 ```
 
 或者手动把 [`SKILL.md`](SKILL.md) 复制到 `~/.workbuddy/skills/mcd-valor/`。
@@ -416,13 +416,13 @@ python tools/test_empty_account.py
 **Linux / macOS / Git Bash**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Lishoulan/mcd-valor/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Lishoulan/mcd-valor/HEAD/install.sh | bash
 ```
 
 **Windows PowerShell**
 
 ```powershell
-irm https://raw.githubusercontent.com/Lishoulan/mcd-valor/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/Lishoulan/mcd-valor/HEAD/install.ps1 | iex
 ```
 
 装完**重开一轮 WorkBuddy 会话**，然后直接说人话就行：
