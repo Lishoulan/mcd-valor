@@ -149,33 +149,27 @@ $ python -m butler redeem
 > 「能用掉的」不是卡包张数，而是**逐张券 × 逐家门店交叉验证后真正能被用掉的张数**。
 > 通常它明显小于「3 天内到期」——**差值就是注定归零的资产**。
 
-记录由 `tools/record_run.py` 每日自动追加（原始数据 `examples/run-log.jsonl`），
+记录由 `tools/record_run.py` 生成（原始数据 `examples/run-log.jsonl`），
 详见 [docs/RUN_LOG.md](docs/RUN_LOG.md)。
 **这是别人抄不走的东西**——一张截图可以被复制，一条时间序列只能被跑出来。
 
 <details>
-<summary><b>让它每天自动跑（点击展开）</b></summary>
+<summary><b>怎么补一条记录（点击展开）</b></summary>
 
-**手动跑**（每天 1 分钟）：
+**这不是必须的，也不需要每天跑。** 工具本身在需要的时候敲一条命令即可，
+不需要后台常驻。
 
 ```bash
 export MCD_MCP_TOKEN=你的Token
-python tools/record_run.py
+python tools/record_run.py      # 约 1 分钟，抓一次真实数据
+
 git add examples/run-log.jsonl docs/RUN_LOG.md
 git commit -m "chore: 跨天记录 $(date +%F)" && git push
 ```
 
-**定时跑**：`daily.sh`（Linux/macOS）或 `daily.bat`（Windows）会跑记录并自动提交推送。
+想攒证据就隔几天跑一次，跑三五天已经足够说明问题。
 
-```bash
-# Linux / macOS
-crontab -e
-0 9 * * * /path/to/mcd-valor/daily.sh >> /path/to/mcd-valor/daily.log 2>&1
-```
-
-Windows 用「任务计划程序」新建每日 09:00 的基本任务，运行 `daily.bat` 即可。
-
-> **为什么没有用 GitHub Actions？**
+> **为什么没有用 GitHub Actions 自动跑？**
 > 实测 GitHub 的美国 runner 访问 `mcp.mcd.cn` 返回 **HTTP 401**（同一个 Token 在本机是 200），
 > 原因未公开。**你的 Token 也不该从境外机器发出去** —— 所以改成本机定时跑。
 
@@ -624,7 +618,7 @@ mcd-valor/
 ├── mcp-config.example.json  脱敏 MCP 配置示例
 ├── requirements.txt         零依赖声明
 ├── docs/
-│   ├── RUN_LOG.md           跨天运行记录（每日自动追加，最硬的实证）
+│   ├── RUN_LOG.md           跨天运行记录（可选，最硬的实证）
 │   ├── images/              README 配图（真实输出渲染 + GIF 录屏）
 │   └── RECORDING_DEMO.md    录制演示素材的指引
 ├── tools/                   辅助脚本（可选，非运行依赖）
