@@ -1,4 +1,4 @@
-# ---- 凭据：绝不入库----
+# ---- 凭据：绝不入库 ----
 .env
 .env.*
 *.token
@@ -10,7 +10,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
 build/
 dist/
 *.egg-info/
@@ -29,6 +28,10 @@ ENV/
 .coverage
 htmlcov/
 
+# ---- 配图工具的中间产物 ----
+# tools/make_demo_gif.py 逐帧渲染的临时 PNG，不入库
+frames/
+
 # ---- 编辑器 / 系统 ----
 .vscode/
 .idea/
@@ -38,10 +41,10 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# ---- 本地探测脚本产物 ----
+# ---- WorkBuddy 本地工作区数据（不参赛） ----
+.workbuddy/
+
+# ---- 早期探测脚本的遗留产物 ----
 probe/
 tools.json
 *.raw.json
-
-# WorkBuddy 本地记忆与工作区数据（不参赛）
-.workbuddy/

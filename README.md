@@ -1,26 +1,31 @@
 <div align="center">
 
-# 💎 积值 Valor · 把积分花在刀刃上
+# 💎 积值 Valor · 过期资产抢救队
 
-**「麦当劳 50 积分能换 18.8 元的鸡腿堡两件套。而你的积分，还在过期。」**
+**市面上的工具都在帮你「攒」。积值只关心一件事：你手里这些会过期的东西，到底该怎么用掉、用在哪、还能不能救回来。**
 
-大多数「积分工具」都在提醒你**积分要过期了**。
-积值回答的是过期之前那半句更重要的话：**那我该换成什么？**
+三个实测发现，多数人不知道：
+
+| 发现 | 数据 |
+| --- | --- |
+| 你的积分已经在悄悄蒸发 | 累计 6345.4 分里**2902.9 分已过期（46%）**，而 App 显示「本月过期 0 分」 |
+| 大部分临期券其实用不了 | 同一天 7 张券到期，**只有 2 张**在你常去的门店能用 |
+| 抽奖抽的券根本看不见 | 它们躺在**奖品列表**里不在卡包里——**19 个奖品中 3 个已失效**，只查卡包的工具结构上发现不了 |
 
 <br>
 
-![积值 valor 的 value 命令真实运行结果：50 积分可换 18.8 元鸡腿堡，每 100 积分值 37.6 元](docs/images/value-demo.png)
+![积值 valor 真实运行录屏：50 积分可换 18.8 元鸡腿堡，每 100 积分值 37.6 元](docs/images/valor-demo.gif)
 
 [![MCP](https://img.shields.io/badge/MCP-12%20tools-DA291C.svg)](MCP_INTEGRATION.md)
+[![Skill](https://img.shields.io/badge/WorkBuddy-Skill-FFC72C.svg)](SKILL.md)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB.svg)](requirements.txt)
 [![Deps](https://img.shields.io/badge/dependencies-zero-brightgreen.svg)](requirements.txt)
-[![Tests](https://img.shields.io/badge/regression-15%2F15%20passed-2ea44f.svg)](requirements.txt)
 
-**纯 Python 3.8+ 标准库 · 零第三方依赖 · 12 个 MCP Tool 全部真实调用 · 11 个命令 · 全程使用 WorkBuddy 开发**
+**纯 Python 3.8+ 标准库 · 零第三方依赖 · 12 个 MCP Tool 全部真实调用 · 11 个命令 · 可作为 WorkBuddy Skill 安装**
 
 *麦当劳程序员创意开发大赛参赛作品 · 非麦当劳官方产品*
 
-> 💛 如果「积分该当天花掉」这个思路对你有用，点个 **⭐ Star** 支持一下。
+> 💛 如果「过期资产该被抢救而不是被提醒」这个思路对你有用，点个 **⭐ Star** 支持一下。
 > 本作品正在参加麦当劳程序员节创意开发大赛，**Star 数决定排名** 🙏
 
 </div>
@@ -28,6 +33,21 @@
 ---
 
 ## 🧭 30 秒看懂
+
+**方式一 · 装成 WorkBuddy Skill**（推荐，粘贴到 WorkBuddy 对话框即可）
+
+```text
+帮我安装这个技能：https://github.com/Lishoulan/mcd-valor
+把仓库里的 SKILL.md 复制到用户级技能目录（~/.workbuddy/skills/mcd-valor/），确认存在后提醒我重开一轮会话
+```
+
+**方式二 · 命令行**（零依赖，clone 即跑）
+
+```bash
+git clone https://github.com/Lishoulan/mcd-valor.git && cd mcd-valor
+export MCD_MCP_TOKEN=你的Token        # https://open.mcd.cn/mcp 申请
+python -m butler redeem
+```
 
 ```text
 $ python -m butler value
@@ -89,7 +109,36 @@ $ python -m butler value
 
 ---
 
-## 💡 积分为什么会烂在账户里
+## 🎯 三个盲区（我们和只做提醒的工具差在哪）
+
+### 盲区一：券的「门店可用性」几乎没人查
+
+麦当劳 MCP 有 `query-store-coupons` 能查「你在某门店实际能用哪些券」，
+但 103 个参赛项目里**几乎没有把它和卡包券交叉起来用的**。
+
+结果是：所有人都能告诉你「有 7 张券要过期」，但没人告诉你**「所以今天该去哪家店」**。
+
+`redeem` 把 `query-my-coupons` × `query-nearby-stores` × `query-store-coupons`
+三个 Tool 交叉，回答的正是最后那一问。而且它严格区分三态：
+
+| 状态 | 含义 |
+| --- | --- |
+| `✓ 可用` | 该店接口明确返回这张券，附门店编号 |
+| `✗ 不支持` | 已验证的门店都明确返回了空 |
+| `? 未验证` | 没查到，不谎报 |
+
+### 盲区二：抽奖奖品不在卡包里
+
+`query-my-coupons`（卡包券）和 `query-my-prizes`（抽奖奖品）
+是**两个完全独立的数据源**。抽奖抽到的券**只在后者里**。
+
+所以任何只查卡包的临期提醒工具——**结构上就看不到它们**。
+实测该账户 19 个奖品里 3 个已失效，全是抽中的优惠券，
+可用期只有 6 天却没人用掉。
+
+`prizes` 专门管这一段。**积分 → 抽奖 → 奖品 → 奖品失效**，全生命周期覆盖。
+
+### 盲区三：积分是消耗品，不是资产
 
 因为「攒着」是个陷阱：
 
@@ -113,17 +162,19 @@ $ python -m butler value
 
 ![积值覆盖的三类资产：积分、卡包里的券、抽奖奖品，以及普通工具结构性漏掉的第三类](docs/images/three-assets.png)
 
-**三类资产，三条命令，全生命周期覆盖：**
+**三类资产，三个断点，全生命周期覆盖：**
 
 ```
-积分  ──account / value──▶  该换成什么（性价比排行 + 抽奖决策）
-券    ──redeem / coupons──▶  临期的去哪张店用掉
-奖品  ──prizes──────────▶  抽到的别躺在列表里过期
+积分  ──account / value──▶  在贬值，该换成什么（性价比排行 + 抽奖决策）
+券    ──redeem / coupons──▶  临期的去哪家店才用得掉（交叉验证）
+奖品  ──prizes──────────▶  抽到的别躺在列表里过期（卡包看不到）
 ```
 
 ---
 
 ## 🚀 三步开吃
+
+> **两种用法**：装成 WorkBuddy Skill（见上方「30 秒看懂」），或直接用命令行。
 
 ### 第 0 步 · 确认你有 Python 3.8+
 
@@ -490,12 +541,17 @@ butler/
 ```
 mcd-valor/
 ├── butler/                  源代码（零依赖）
+├── SKILL.md                 WorkBuddy Skill 定义（可一句话安装）
 ├── README.md                本文件
 ├── MCP_INTEGRATION.md       MCP Server / Tool / 调用流程 / 业务价值
 ├── CONTEST_DECLARATION.md   参赛声明（官方原文）
 ├── workbuddy.md             WorkBuddy 开发上下文（专项奖励核验）
 ├── mcp-config.example.json  脱敏 MCP 配置示例
 ├── requirements.txt         零依赖声明
+├── docs/
+│   ├── images/              README 配图（真实输出渲染 + GIF 录屏）
+│   └── RECORDING_DEMO.md    录制演示素材的指引
+├── tools/                   配图生成脚本（可选，非运行依赖）
 ├── LICENSE                  MIT
 └── .gitignore
 ```
