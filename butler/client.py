@@ -146,6 +146,32 @@ class McdClient(object):
         self._id = 0
         self._sid = None  # Mcp-Session-Id，若服务端下发则后续请求需带上
         self.server_info = None
+        self._detail_cache = {}   # spuId -> 是否可兑换（同一进程内只查一次）
+
+    # ---------- 商品可兑换性 ----------
+    def detail_available(self, spu_id):
+        """商城商品现在还能不能兑换。
+
+        `mall-points-products` 会把**已下架商品一并返回**，且：
+          - `status` 恒为 2，区分不出来
+          - `downTime` 对派对类（未来日期）也不可靠
+        唯一权威判据是 `mall-product-detail`：下架商品返回 `610403 商品已下架`。
+        结果缓存，避免同一进程内重复请求。
+        """
+        if spu_id is None:
+            return False
+        key = str(spu_id)
+        if key in self._detail_cache:
+            return self._detail_cache[key]
+        try:
+            self.call_json("mall-product-detail", {"spuId": key})
+            ok = True
+        except Exception as exc:
+            msg = str(exc)
+            # 610403 = 已下架；其他错误（网络等）不当成下架，按可用处理并留待人工判断
+            ok = "610403" not in msg and "下架" not in msg
+        self._detail_cache[key] = ok
+        return ok
 
     # ---------- 底层 HTTP ----------
     def _post(self, payload, expect_reply=True):

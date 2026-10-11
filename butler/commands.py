@@ -858,6 +858,25 @@ def cmd_value(client, args):
     priced = [r for r in rows if r["face"] and r["point"] > 0]
     unpriced = [r for r in rows if not (r["face"] and r["point"] > 0)]
 
+    # 🔴 可兑换性验证（必须做，否则就是推荐用户去换已经下架的东西）
+    #   实测：`mall-points-products` 会把已下架商品一并返回，
+    #   `status` 恒为 2 区分不出来，`downTime` 对派对类（未来日期）也不可靠。
+    #   唯一权威判据是 `mall-product-detail`：下架商品会返回 610403。
+    #   实测 50 件里 19 件下架，性价比前 12 名中 8 个已下架（含前 3 名）。
+    priced.sort(key=lambda r: r["face"] / r["point"], reverse=True)
+    priced = priced[:24]          # 只核验有希望进前列的，避免 50 次请求
+    verified, offline = [], []
+    for r in priced:
+        if not client.detail_available(r["spu"]):
+            offline.append(r)
+        else:
+            verified.append(r)
+    if offline:
+        U.out(U.grey("  已剔除 %d 件已下架商品（经 mall-product-detail 逐个核实，"
+                     "返回 610403）" % len(offline)))
+
+    priced = verified
+
     if priced:
         # 性价比 = 面值 / 积分（每 100 积分能换多少元）
         for r in priced:
@@ -994,36 +1013,56 @@ def cmd_prizes(client, args):
 
     if usable:
         U.out(U.rule())
-        U.out(U.bold("  ✓ 还能用的奖品"))
-        U.out(U.rule())
-        rows = []
-        for p in sorted(usable, key=remind_key):
-            note = (p.get("timeRemindText") or "").replace("可用时间: ", "")
-            days = None
-            m = re.search(r"(\d{4})[.\-/](\d{2})[.\-/](\d{2})\s*-\s*(\d{4})[.\-/](\d{2})[.\-/](\d{2})",
-                          p.get("timeRemindText") or "")
-            if m:
-                try:
-                    end = date(int(m.group(4)), int(m.group(5)), int(m.group(6)))
-                    days = (end - date.today()).days
-                except ValueError:
-                    pass
-            if days is not None and days < 0:
-                badge = U.red("已过期")
-            elif days is not None and days <= 2:
-                badge = U.red("%d 天后截止" % days)
-            elif days is not None:
-                badge = U.green("至 %s" % note[-10:])
-            else:
-                badge = U.grey("无有效期信息")
-            rows.append([
-                U.truncate(p.get("name") or "-", 24),
-                p.get("prizeTypeText") or "-",
-                (p.get("recordTime") or "-")[:10],
-                badge,
-            ])
-        U.out(U.table(["奖品", "类型", "抽中日期", "状态"], rows, ["l", "l", "l", "l"]))
-        U.out()
+        # 优惠券才是「会过期、容易忘」的资产，门票不是 —— 分组显示，
+        # 避免 16 张门票把真正需要注意的券埋掉（实测该账户 19 个里 16 个是门票）。
+        coupons_live = [p for p in usable
+                        if "券" in (p.get("prizeTypeText") or "")]
+        others = [p for p in usable if p not in coupons_live]
+
+        def _prize_rows(items):
+            out = []
+            for p in sorted(items, key=remind_key):
+                note = (p.get("timeRemindText") or "").replace("可用时间: ", "")
+                days = None
+                m = re.search(r"(\d{4})[.\-/](\d{2})[.\-/](\d{2})\s*-\s*(\d{4})[.\-/](\d{2})[.\-/](\d{2})",
+                              p.get("timeRemindText") or "")
+                if m:
+                    try:
+                        end = date(int(m.group(4)), int(m.group(5)), int(m.group(6)))
+                        days = (end - date.today()).days
+                    except ValueError:
+                        pass
+                if days is not None and days < 0:
+                    badge = U.red("已过期")
+                elif days is not None and days <= 2:
+                    badge = U.red("%d 天后截止" % days)
+                elif days is not None:
+                    badge = U.green("至 %s" % note[-10:])
+                else:
+                    badge = U.grey("无有效期信息")
+                out.append([
+                    U.truncate(p.get("name") or "-", 24),
+                    p.get("prizeTypeText") or "-",
+                    (p.get("recordTime") or "-")[:10],
+                    badge,
+                ])
+            return out
+
+        if coupons_live:
+            U.out(U.bold("  ✓ 还能用的优惠券（会过期，优先看这些）"))
+            U.out(U.rule())
+            U.out(U.table(["奖品", "类型", "抽中日期", "状态"],
+                          _prize_rows(coupons_live), ["l", "l", "l", "l"]))
+            U.out()
+
+        if others:
+            head = ("  ✓ 还能用的其他奖品（%d 个）" % len(others)) if coupons_live \
+                else "  ✓ 还能用的奖品"
+            U.out(U.bold(head))
+            U.out(U.rule())
+            U.out(U.table(["奖品", "类型", "抽中日期", "状态"],
+                          _prize_rows(others), ["l", "l", "l", "l"]))
+            U.out()
 
     if dead:
         U.out(U.rule())

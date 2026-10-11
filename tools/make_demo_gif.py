@@ -27,8 +27,12 @@ H_MAX = 1180              # 最多显示到多少像素高
 BAR_H = 38
 PAD = 18
 LINE_H = 19
-FONT_MONO = "C:/Windows/Fonts/CascadiaMono.ttf"
-FONT_CJK = "C:/Windows/Fonts/msyh.ttc"
+FONT_MONO = "C:/Windows/Fonts/consola.ttf"
+# 中文必须用等宽字体，否则表格列会歪。
+# SimHei 实测：中=15.0 宽、数字=8.0 与 consola 完全一致，
+# 且「中中」宽度正好是单个的两倍（比例 2.00）。
+# 微软雅黑虽然也有这个比例，但数字宽 9.0 与 consola 的 8.0 不一致，会错位。
+FONT_CJK = "C:/Windows/Fonts/SimHei.ttf"
 FS = 14
 
 # GitHub 暗色终端配色
@@ -99,20 +103,32 @@ def draw_line(d, x, y, line):
             col = MUTED
         buf = ""
         for ch in text:
-            if ch in BOX or ch in SKIP:
+            if ch in SKIP:
                 if buf:
-                    for c2 in buf:
-                        f = cjk if wide(c2) else mono
-                        d.text((x, y), c2, font=f, fill=col)
-                        x += f.getlength(c2)
+                    x = _flush(d, x, y, buf, col)
                     buf = ""
+                continue
+            if ch in BOX:
+                if buf:
+                    x = _flush(d, x, y, buf, col)
+                    buf = ""
+                x += mono.getlength("─")   # 跳过绘制，但保留占位宽度
                 continue
             buf += ch
         if buf:
-            for c2 in buf:
-                f = cjk if wide(c2) else mono
-                d.text((x, y), c2, font=f, fill=col)
-                x += f.getlength(c2)
+            x = _flush(d, x, y, buf, col)
+    return x
+
+
+def _flush(d, x, y, buf, col):
+    """按宽字符占两格绘制，保证中文表格能对齐。"""
+    for ch in buf:
+        if wide(ch):
+            d.text((x, y), ch, font=cjk, fill=col)
+            x += cjk.getlength(ch)          # 中文本来就占两格宽
+        else:
+            d.text((x, y), ch, font=mono, fill=col)
+            x += mono.getlength(ch)
     return x
 
 

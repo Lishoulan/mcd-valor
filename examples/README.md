@@ -19,7 +19,7 @@ python -m butler value > examples/value.txt
 
 | 文件 | 对应命令 | 值得看的地方 |
 | --- | --- | --- |
-| **`value.txt`** | `python -m butler value` | **50 积分能换 18.8 元鸡腿堡**（每 100 积分值 37.6 元）；末尾「已过期 2902.9 分，本可以换 58 份」 |
+| **`value.txt`** | `python -m butler value` | **剔除 13 件已下架商品**后给出真实最优（¥13.8/100 分）；末尾「已过期 2902.9 分」 |
 | **`redeem.txt`** | `python -m butler redeem` | **6 张临期券只有 2 张能救**，另外 4 张连外送都核验过、确认用不了 |
 | **`prizes.txt`** | `python -m butler prizes` | 19 个抽奖奖品中 **3 个已失效**，而它们不在卡包里 |
 | `account.txt` | `python -m butler account` | 累计 6345.4 分里 **2902.9 分（46%）已过期** |
