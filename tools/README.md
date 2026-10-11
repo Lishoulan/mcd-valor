@@ -8,10 +8,33 @@
 
 | 文件 | 作用 | 依赖 |
 | --- | --- | --- |
+| **`record_run.py`** | **每日跑一次，追加跨天运行记录（最硬的实证）** | 无（标准库） |
 | `make_demo_gif.py` | 逐帧绘制终端文字 → 动画 GIF（首屏演示） | Pillow |
 | `render_shot.js` | 带ANSI 色的终端输出 → PNG | Node + puppeteer-core + Chrome |
 | `render_html.js` | 本地 HTML → PNG（结构图） | 同上 |
 | `assets.html` | 「三类资产」结构图的 HTML 源 | 无 |
+
+## 跨天运行记录（最有价值的一个）
+
+```bash
+export MCD_MCP_TOKEN=你的Token
+python tools/record_run.py          # 记录今天
+python tools/record_run.py --show   # 只看已有记录
+```
+
+产物：
+- `examples/run-log.jsonl` —— 每行一条 JSON（机器可读）
+- `docs/RUN_LOG.md` —— 自动渲染成表格（人可读）
+
+**为什么这个比配图重要**：券每天在过期、每天有新的进账。
+所有参赛项目的 README 都只贴**某一刻**的截图，读者无法判断真假；
+而这是一条随时间延伸的序列，**证明项目真的在持续运行**。
+
+记录的「能用掉的」一列是**逐张券 × 逐家门店调`query-store-coupons`
+交叉验证后**的结果，通常明显小于「3 天内到期」——差值就是注定归零的资产。
+
+> 建议每天跑一次，跑满一周后 README 里那张表就很有说服力了。
+
 
 ## 为什么 GIF 用 Python 而不是 ffmpeg
 
