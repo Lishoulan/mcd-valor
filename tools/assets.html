@@ -1,0 +1,74 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;padding:34px 30px 30px;font-family:"Microsoft YaHei UI","PingFang SC",sans-serif;width:1000px}
+.h{color:#e6edf3;font-size:21px;font-weight:600;text-align:center;margin-bottom:6px}
+.s{color:#8b949e;font-size:13px;text-align:center;margin-bottom:26px}
+.row{display:flex;gap:16px;justify-content:center;align-items:stretch}
+.card{flex:1;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px 18px}
+.tag{display:inline-block;font-size:11px;padding:3px 9px;border-radius:20px;margin-bottom:11px;font-weight:500}
+.t1{background:#2d1a0e;color:#ffc680;border:1px solid #7d4a1f}
+.t2{background:#0f2417;color:#7ee787;border:1px solid #1f5c36}
+.t3{background:#1a1030;color:#d2a8ff;border:1px solid #4c2f7a}
+.ct{color:#e6edf3;font-size:16px;font-weight:600;margin-bottom:4px}
+.cs{color:#8b949e;font-size:12px;margin-bottom:15px}
+.li{color:#c9d1d9;font-size:13px;line-height:1.75;padding-left:13px;position:relative}
+.li:before{content:"";position:absolute;left:0;top:9px;width:5px;height:5px;border-radius:50%}
+.t1+.li:before,.li.a:before{background:#ffc680}
+.li.b:before{background:#7ee787}
+.li.c:before{background:#d2a8ff}
+.arrow{color:#484f58;font-size:20px;align-self:center}
+.bottom{margin-top:24px;background:#1c1410;border:1px solid #7d4a1f;border-radius:12px;padding:17px 20px;text-align:center}
+.bt{color:#ffc680;font-size:14.5px;font-weight:500;margin-bottom:6px}
+.bs{color:#9a7b5f;font-size:12.5px;line-height:1.6}
+.gr{display:flex;gap:12px;margin-top:22px}
+.gc{flex:1;background:#12161c;border:1px solid #21262d;border-radius:10px;padding:14px 16px}
+.gt{color:#8b949e;font-size:11.5px;margin-bottom:5px}
+.gv{color:#e6edf3;font-size:14px;font-weight:500}
+</style></head><body>
+
+<div class="h">积值覆盖的三类资产，普通工具只看到其中一类</div>
+<div class="s">同一个麦当劳账户，积分 / 券 / 奖品存在三个互不相通的地方 —— 不交叉，就必然漏</div>
+
+<div class="row">
+  <div class="card">
+    <span class="tag t1">资产一</span>
+    <div class="ct">积分</div>
+    <div class="cs">query-my-account</div>
+    <div class="li a">「有 1583.5 分，已过期 2902.9 分」</div>
+    <div class="li a">「该换成什么？换哪个最值？」</div>
+    <div class="li a">→ value / account</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="card">
+    <span class="tag t2">资产二</span>
+    <div class="ct">卡包里的券</div>
+    <div class="cs">query-my-coupons</div>
+    <div class="li b">「7 张 3 天内到期，其中 5 张不可用」</div>
+    <div class="li b">「今天到底去哪张店用掉？」</div>
+    <div class="li b">→ redeem / coupons</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="card">
+    <span class="tag t3">资产三</span>
+    <div class="ct">抽奖奖品</div>
+    <div class="cs">query-my-prizes</div>
+    <div class="li c">「19 个奖品，3 个已失效」</div>
+    <div class="li c">「它们不在卡包里，多数工具看不到」</div>
+    <div class="li c">→ prizes</div>
+  </div>
+</div>
+
+<div class="bottom">
+  <div class="bt">实测结论：只查卡包的工具，结构性漏掉了第三类资产</div>
+  <div class="bs">query-my-coupons 与 query-my-prizes 是两个独立数据源。
+  抽奖抽到的券只存在于后者 —— 实测有3 张券因此白抽、白扔，而任何「卡包临期提醒」都显示不出来。</div>
+</div>
+
+<div class="gr">
+  <div class="gc"><div class="gt">已过期积分</div><div class="gv">2902.9 分 / 占累计 46%</div></div>
+  <div class="gc"><div class="gt">本可以换</div><div class="gv">58 份鸡腿堡两件套</div></div>
+  <div class="gc"><div class="gt">实测最优兑换</div><div class="gv">每 100 积分值 ¥37.6</div></div>
+  <div class="gc"><div class="gt">当前临期券可用率</div><div class="gv">7 张里 2 张能用</div></div>
+</div>
+
+</body></html>
