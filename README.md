@@ -34,12 +34,20 @@
 
 ## 🧭 30 秒看懂
 
-**方式一 · 装成 WorkBuddy Skill**（推荐，粘贴到 WorkBuddy 对话框即可）
+**方式一 · 装成 WorkBuddy Skill**（推荐）
 
-```text
-帮我安装这个技能：https://github.com/Lishoulan/mcd-valor
-把仓库里的 SKILL.md 复制到用户级技能目录（~/.workbuddy/skills/mcd-valor/），确认存在后提醒我重开一轮会话
+```bash
+curl -fsSL https://raw.githubusercontent.com/Lishoulan/mcd-valor/main/install.sh | bash
 ```
+
+Windows PowerShell：
+
+```powershell
+irm https://raw.githubusercontent.com/Lishoulan/mcd-valor/main/install.ps1 | iex
+```
+
+或者手动把 [`SKILL.md`](SKILL.md) 复制到 `~/.workbuddy/skills/mcd-valor/`。
+装完**重开一轮会话**，然后直接说：「我的积分该换成什么」「我这几张券今天该去哪家店用」。
 
 **方式二 · 命令行**（零依赖，clone 即跑）
 
@@ -541,7 +549,9 @@ butler/
 ```
 mcd-valor/
 ├── butler/                  源代码（零依赖）
-├── SKILL.md                 WorkBuddy Skill 定义（可一句话安装）
+├── SKILL.md                 WorkBuddy Skill 定义
+├── install.sh / install.ps1 一键安装脚本（Skill 用户用）
+├── examples/                10 个命令的真实运行输出（可复现核对）
 ├── README.md                本文件
 ├── MCP_INTEGRATION.md       MCP Server / Tool / 调用流程 / 业务价值
 ├── CONTEST_DECLARATION.md   参赛声明（官方原文）
