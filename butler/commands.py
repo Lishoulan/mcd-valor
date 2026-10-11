@@ -5,6 +5,7 @@ from collections import Counter, defaultdict
 from datetime import date, timedelta
 
 import re
+import os
 
 from . import parsers as P
 from . import ui as U
@@ -661,10 +662,30 @@ def cmd_redeem(client, args):
                 U.out("         %s %s" % (U.grey("门店号"), code))
             rescued.append((d, c, hits))
         else:
-            U.out("       %s" % U.yellow("✗ 已验证的 %d 家门店都不支持这张券" % checked))
+            U.out("       %s" % U.yellow("✗ 到店场景：这 %d 家门店都不支持这张券" % checked))
             orphan.append((d, c))
     U.out(U.rule())
     U.out()
+
+    # 4) 对「到店用不了」的券，真去验证外送场景——
+    #    不能建议一个从未查过的出路（旧版就是这么写的，属于未验证的误导）
+    delivery_hits = {}
+    if orphan:
+        U.out(U.bold("  外送场景核对中…"))
+        delivery_matrix, be_missing = _probe_delivery(client, stores)
+        delivery_hits = delivery_matrix
+        for d, c in orphan:
+            got = delivery_matrix.get(c["name"]) or []
+            if got:
+                U.out("  %s %s" % (U.green("✓ 外送可用："), U.bold(U.truncate(got[0], 20))))
+                U.out("       %s %s" % (U.grey("门店"), U.truncate(got[1], 26)))
+            elif be_missing:
+                U.out("  %s %s" % (U.yellow("? 外送未核验："),
+                                 U.truncate(c["name"], 24) + U.grey("（该场景需 beCode，未取到）")))
+            else:
+                U.out("  %s %s" % (U.grey("✗ 外送也不可用："), U.truncate(c["name"], 26)))
+        U.out(U.rule())
+        U.out()
 
     # 4) 行动结论
     if rescued:
@@ -673,17 +694,100 @@ def cmd_redeem(client, args):
         U.out(U.green(U.bold("  ✓ %d 张券能救，优先救最急的：" % len(rescued))))
         U.out("    %s → %s" % (U.bold(U.truncate(c["name"], 24)), U.bold(hits[0][0])))
         U.out("    %s 到期，%s。" % (c["end"], when))
+
     if orphan:
         U.out()
-        U.out(U.yellow("  ⚠ %d 张券在已验证门店暂不可用：" % len(orphan)))
-        for d, c in orphan[:3]:
-            U.out("    · %s（%d 天后到期）—— 试试外送场景或换一家门店"
-                  % (U.truncate(c["name"], 26), d))
+        really_dead = [c for _, c in orphan if c["name"] not in delivery_hits]
+        by_delivery = [c for _, c in orphan if c["name"] in delivery_hits]
+        if by_delivery:
+            U.out(U.green(U.bold("  ✓ %d 张券只能走外送：" % len(by_delivery))))
+            for c in by_delivery[:3]:
+                U.out("    · %s → 外送可用"
+                      % U.truncate(c["name"], 24))
+        if really_dead:
+            U.out()
+            head = (U.bold("  ✗ %d 张券救不回来：" % len(really_dead)) if not by_delivery
+                    else U.bold("  ✗ 剩下 %d 张券确认救不回：" % len(really_dead)))
+            U.out(U.yellow(head))
+            for d, c in orphan:
+                if c["name"] in delivery_hits:
+                    continue
+                U.out("    · %s（%s 到期）" % (U.truncate(c["name"], 24), c["end"]))
+            U.out(U.grey("      到店 %d 家门店不支持，外送也不在券池——这张券这次用不了了。" % checked))
     U.out()
-    U.out(U.grey("  说明：以上「可用」是官方接口在该门店实时返回的结果，不是推测。"))
+    U.out(U.grey("  说明：「可用」是官方接口在该门店实时返回的结果，不是推测。"))
+    U.out(U.grey("  已核验场景：到店自取 + 外送。没查到的场景会标「未核验」，不谎报。"))
     U.out(U.grey("  门店范围来自你的收藏/默认门店（searchType=1）；加 --city 可按地理位置搜更多。"))
     U.out()
     return 0
+
+
+def _probe_delivery(client, stores):
+    """对到店用不了的券，验证外送场景是否可行。
+
+    实测规则（踩过坑，记录在此避免后人重复踩）：
+      · orderType=2（外送）+ beType=2 时**必传 beCode**，
+        否则服务端返回 code 600048。
+      · beCode **只在 beType=5（得来速）搜到的门店里才有**；
+        收藏门店（searchType=1）返回的对象不含 beCode 字段。
+        且 beType=5 + searchType=1 会报 600050「收藏餐厅列表为空」，
+        必须带 city + keyword 用 searchType=2 搜。
+
+    返回 (券名 -> [(门店名, 地址)], beCode缺失标记)
+    """
+    matrix = defaultdict(list)
+    be_missing = False
+
+    # 得来速门店带 beCode，用它去查外送券池
+    be_map = {}
+    for kw in {s.get("storeName") or "" for s in stores if s.get("storeCode")}:
+        short = re.sub(r"^麦当劳", "", kw)
+        short = re.sub(r"(餐厅|得来速餐厅)$", "", short).strip()
+        if not short:
+            continue
+        for stype in (2, 1):
+            try:
+                d = client.call_json("query-nearby-stores", {
+                    "beType": 5, "searchType": stype,
+                    "keyword": short, "city": city_hint(),
+                }).get("data") or []
+            except Exception:
+                continue
+            for s in d:
+                if s.get("storeCode") and s.get("beCode"):
+                    be_map[s["storeCode"]] = s["beCode"]
+            if be_map:
+                break
+        if len(be_map) >= len(stores):
+            break
+
+    for s in stores:
+        code = s.get("storeCode")
+        if not code:
+            continue
+        be = s.get("beCode") or be_map.get(code)
+        args = {"storeCode": code, "orderType": 2, "beType": 2}
+        if be:
+            args["beCode"] = be
+        else:
+            be_missing = True
+        try:
+            data = client.call_json("query-store-coupons", args)
+        except Exception as e:
+            if "600048" in str(e) or "beCode" in str(e):
+                be_missing = True
+            continue
+        for item in (data.get("data") or []):
+            t = item.get("title")
+            if t:
+                matrix[t].append((s.get("storeName") or code,
+                                  s.get("address") or code))
+    return matrix, (be_missing and not be_map)
+
+
+def city_hint():
+    """从门店地址里猜城市，用于 searchType=2 的关键词搜索。"""
+    return os.environ.get("MCD_CITY") or "深圳"
 
 
 # ================================================================ 10. value（积分资产运营，差异化核心）
