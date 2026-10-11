@@ -92,6 +92,21 @@ def cmd_account(client, args):
     U.out()
     if expired > 0:
         U.out("  " + U.red(U.bold("⚠  你已经白白过期了 %s 分" % _num(expired))))
+        # 说清expiredPoint 的口径，否则「本月 0 分」和「已过期 2902.9 分」
+        # 并列会让人以为自相矛盾
+        gap = accumulative - available - used - expired
+        U.out("  " + U.grey("这是累计口径的expiredPoint，不是「本月过期」——"))
+        if abs(gap) >= 0.5:
+            U.out("  " + U.grey(
+                "官方字段之间也不自洽：累计 %.1f − 可用 %.1f − 已用 %.1f = %.1f，"
+                % (accumulative, available, used, accumulative - available - used)))
+            U.out("  " + U.grey(
+                "与 expiredPoint 差 %.1f 分。本工具按官方 expiredPoint 显示，"
+                "不替你猜这差额是什么。" % gap))
+        else:
+            U.out("  " + U.grey(
+                "累计 %.1f − 可用 %.1f − 已用 %.1f = %.1f，三者对得上。"
+                % (accumulative, available, used, accumulative - available - used)))
         U.out("  " + U.grey("这些积分本来可以换的。下一张券包别再让它躺着过期了。"))
     else:
         U.out("  " + U.green("✓ 历史零过期，你把积分守得很好。"))
@@ -317,6 +332,8 @@ def cmd_expiring(client, args):
     else:
         U.out(U.yellow("  ⏰ 最近一项在 %d 天后，安排这周用掉就行。" % timeline[0][0]))
     U.out(U.grey("  想顺手把到期积分换掉：`python -m butler account` 看余额"))
+    U.out(U.grey("  ⚠ 但上面这些券**不一定能在你常去的门店用**——"
+                  "去 `python -m butler redeem` 查，它会逐店核验并告诉你该去哪张。"))
     U.out()
     return 0
 
