@@ -413,6 +413,26 @@ python tools/test_doc_commands.py
 而文档里最初漏了，照着抄会报 `600050 收藏餐厅列表为空`——
 错误信息还会把人引向「接口有问题」，想不到是自己少写了参数。已修正。
 
+### Windows 路径也实跑过
+
+其他测试都在 Git Bash / subprocess 里跑，**Windows 用户路径是另一回事**：
+
+```powershell
+$env:MCD_MCP_TOKEN = "你的Token"
+python tools\test_windows.ps1
+```
+
+```text
+=== PowerShell 5.1.26100.9444 ===
+  OK   butler account          OK   butler nutrition 麦满分
+  OK   butler stores 北大 --city 北京
+  OK   butler stores 地铁站 --dt --city 深圳   ...
+通过 16 / 16
+OK Windows 路径全部可用
+```
+
+**16 条全部通过，含中文门店名参数** —— 在 PowerShell 5.1 + Python 3.13 上实测。
+
 ### 其他工具通常不会告诉你的事
 
 | 现象 | 真相 |
@@ -485,7 +505,16 @@ $env:MCD_MCP_TOKEN = "你的Token"
 python -m butler redeem
 ```
 
-> 没配 Token 时它会自己告诉你怎么办：
+**Windows 上最常见的两个坑**（都是实测撞到的）：
+
+| 现象 | 原因与解法 |
+| --- | --- |
+| `无法将"python"项识别为 cmdlet` | Python 没加进 PATH。装 Python 时勾选 **Add python.exe to PATH**；或在 Microsoft Store 搜「Python」装（自动配好 PATH）。 |
+| PowerShell 5.1 里中文变乱码（`鈹?` `绉€`） | **只是捕获输出时的问题**，直接看终端显示是正常的。想彻底避免就把 PowerShell 升级到 7+，或在命令前加 `$OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8`。 |
+
+> 产品本身在 Windows 上验证过：11 个命令在 PowerShell 5.1 + Python 3.13 全部实跑通过。
+
+没配 Token 时它会自己告诉你怎么办：
 > ```text
 > ✗ 鉴权问题
 >   没有检测到环境变量 MCD_MCP_TOKEN。

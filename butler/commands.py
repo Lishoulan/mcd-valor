@@ -464,7 +464,7 @@ def cmd_stores(client, args):
             s.get("storeCode") or "-",
             dist_txt,
             resv,
-            U.grey(U.truncate(s.get("address") or "-", 40)),
+            U.grey(U.truncate(s.get("address") or "-", 60)),
         ])
     U.out(U.table(["门店", "门店编号", "距离*", "预约", "地址"], rows,
                   ["l", "l", "r", "l", "l"]))
@@ -472,6 +472,7 @@ def cmd_stores(client, args):
     U.out(U.grey("  共 %d 家。门店编号可用于下单/查券类工具。" % len(stores)))
     U.out(U.grey("  * 官方接口未说明 distance 的单位（实测搜深圳门店返回 4611、12067），"
                   "所以这里只给原始值，不标 km。"))
+    U.out(U.grey("  地址列超长会被截断（以…结尾）—— 要完整地址请拿门店编号去 App 里看。"))
     U.out()
     return 0
 
